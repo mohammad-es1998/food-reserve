@@ -60,3 +60,4 @@ func (c *UserController) Register(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "registration successful"})
 }
+
