@@ -26,8 +26,8 @@ func ConnectDB() *gorm.DB {
 		"127.0.0.1",
 		"5432",
 		"food",
-		"behuser",
-		"behuser",
+		"fooduser",
+		"Food@Kabab#jouje",
 		"disable")
 
 	db, err := gorm.Open(postgres.Open(conn), &gorm.Config{
