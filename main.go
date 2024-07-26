@@ -17,8 +17,11 @@ func main() {
 	db := ConnectDB()
 	MigrateDb(db)
 	restInitialize(db)
+	//todo add logger and handle panic
+	//todo use graceful shutdown
 }
 func ConnectDB() *gorm.DB {
+	//todo use env config for connection string
 	conn := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s",
 		"127.0.0.1",
 		"5432",
@@ -53,6 +56,7 @@ func MigrateDb(db *gorm.DB) error {
 		return err
 	}
 
+	//todo handle error for duplicate key or another db error
 	db.Create(&model.Role{Model: gorm.Model{ID: 1}, Name: "manager", Permissions: "user:read,user:create,product:read,product:create"})
 	db.Create(&model.Role{Model: gorm.Model{ID: 2}, Name: "customer", Permissions: "product:read"})
 	if db.Error != nil {
@@ -63,12 +67,11 @@ func MigrateDb(db *gorm.DB) error {
 
 func restInitialize(database *gorm.DB) {
 
-	userRepo := repository.NewUserRepository(database)
-	authRepo := repository.NewAuthRepository(database)
-	userService := service.NewUserService(userRepo)
-	authService := service.NewAuthService(authRepo)
+	uow := repository.NewUnitOfWork(database)
+	userService := service.NewUserService(uow)
+	//authService := service.NewAuthService(uow)
 	userController := controller.NewUserController(userService)
-	_ = controller.NewAuthController(authService)
+	//_ = controller.NewAuthController(authService)
 
 	r := gin.Default()
 	//r.POST("/register", authController.RoleMiddleware("user:read"), userController.Register)

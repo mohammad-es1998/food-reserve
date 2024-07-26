@@ -2,17 +2,17 @@ package service
 
 import (
 	"errors"
-	repository "food-reserve/db/repository/interface"
+	"food-reserve/db/repository"
 	service "food-reserve/logic/service/interface"
 	"food-reserve/logic/utils"
 )
 
 type authService struct {
-	authRepo repository.IAuthRepository
+	uow repository.IUnitOfWork
 }
 
-func NewAuthService(authRepo repository.IAuthRepository) service.IAuthService {
-	return &authService{authRepo: authRepo}
+func NewAuthService(uow repository.IUnitOfWork) service.IAuthService {
+	return &authService{uow: uow}
 }
 
 func (s *authService) CheckPermission(token string, requiredPermission string) (*utils.Claims, error) {
@@ -22,7 +22,7 @@ func (s *authService) CheckPermission(token string, requiredPermission string) (
 		return nil, errors.New(utils.InvalidToken)
 	}
 
-	user, err := s.authRepo.GetUser(claims.Username)
+	user, err := s.uow.AuthRepository().GetUser(claims.Username)
 	if err != nil {
 		return nil, errors.New(utils.UserNotFound)
 	}

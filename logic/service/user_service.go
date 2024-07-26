@@ -3,21 +3,23 @@ package service
 import (
 	"errors"
 	"food-reserve/db/model"
-	repository "food-reserve/db/repository/interface"
+	"food-reserve/db/repository"
 	service "food-reserve/logic/service/interface"
+	"food-reserve/logic/utils"
 	bcrypt "golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type userService struct {
-	userRepo repository.IUserRepository
+	uow repository.IUnitOfWork
 }
 
-func NewUserService(userRepo repository.IUserRepository) service.IUserService {
-	return &userService{userRepo: userRepo}
+func NewUserService(uow repository.IUnitOfWork) service.IUserService {
+	return &userService{uow: uow}
 }
 
 func (s *userService) Login(username, password string) (*model.User, error) {
-	user, err := s.userRepo.GetByUsername(username)
+	user, err := s.uow.UserRepository().GetByUsername(username)
 	if err != nil {
 		return nil, err
 	}
@@ -34,12 +36,18 @@ func (s *userService) Register(username, password, role string) error {
 	if err != nil {
 		return err
 	}
+	accessRole, err := s.uow.RoleRepository().GetByName(role)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New(utils.RoleNotFound)
+		}
+	}
 
 	user := &model.User{
 		Username: username,
 		Password: string(hashedPassword),
-		Role:     model.Role{Name: role},
+		Role:     model.Role{Model: gorm.Model{ID: accessRole.ID}},
 	}
 
-	return s.userRepo.Create(user)
+	return s.uow.UserRepository().Create(user)
 }
